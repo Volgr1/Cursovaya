@@ -15,7 +15,7 @@ const Analytics = () => {
 
   const fetchGoals = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/goals');
+      const response = await axios.get('https://cursovaya-u3w7.onrender.com/api/goals');
       setGoals(response.data);
       setLoading(false);
     } catch (error) {

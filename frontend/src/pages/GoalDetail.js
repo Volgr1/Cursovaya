@@ -50,7 +50,7 @@ const GoalDetail = () => {
 
   const fetchGoal = async () => {
     try {
-      const response = await axios.get(`http://localhost:3001/api/goals/${id}`);
+      const response = await axios.get(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`);
       const goalData = response.data;
       
       // Рассчитываем прогресс
@@ -58,7 +58,7 @@ const GoalDetail = () => {
       
       // Обновляем прогресс на сервере если изменился
       if (calculatedProgress !== goalData.progress) {
-        await axios.put(`http://localhost:3001/api/goals/${id}`, {
+        await axios.put(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`, {
           ...goalData,
           progress: calculatedProgress
         });
@@ -94,7 +94,7 @@ const GoalDetail = () => {
       // Рассчитываем новый прогресс
       const newProgress = calculateProgress(updatedGoal);
       
-      const response = await axios.put(`http://localhost:3001/api/goals/${id}`, {
+      const response = await axios.put(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`, {
         ...updatedGoal,
         progress: newProgress
       });
@@ -125,7 +125,7 @@ const GoalDetail = () => {
       // Автоматически завершаем цель если прогресс 100%
       const newStatus = newProgress >= 100 ? 'completed' : goal.status;
       
-      const response = await axios.put(`http://localhost:3001/api/goals/${id}`, {
+      const response = await axios.put(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`, {
         ...updatedGoal,
         progress: newProgress,
         status: newStatus
@@ -139,7 +139,7 @@ const GoalDetail = () => {
 
   const updateStatus = async (newStatus) => {
     try {
-      const response = await axios.put(`http://localhost:3001/api/goals/${id}`, {
+      const response = await axios.put(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`, {
         ...goal,
         status: newStatus,
         progress: newStatus === 'completed' ? 100 : goal.progress

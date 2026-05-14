@@ -17,7 +17,7 @@ const GoalsList = () => {
 
   const fetchGoals = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/goals');
+      const response = await axios.get('https://cursovaya-u3w7.onrender.com/api/goals');
       setGoals(response.data);
       setLoading(false);
     } catch (error) {
@@ -29,7 +29,7 @@ const GoalsList = () => {
   const deleteGoal = async (id) => {
     if (window.confirm('Вы уверены, что хотите удалить эту цель?')) {
       try {
-        await axios.delete(`http://localhost:3001/api/goals/${id}`);
+        await axios.delete(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`);
         setGoals(goals.filter(goal => goal.id !== id));
       } catch (error) {
         console.error('Error deleting goal:', error);
@@ -39,7 +39,7 @@ const GoalsList = () => {
   const archiveGoal = async (id) => {
   try {
     const goal = goals.find(g => g.id === id);
-    await axios.put(`http://localhost:3001/api/goals/${id}`, {
+    await axios.put(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`, {
       ...goal,
       status: 'archived'
     });

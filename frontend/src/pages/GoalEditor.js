@@ -37,7 +37,7 @@ const [selectedType, setSelectedType] = useState(typeParam || 'smart');
   const fetchGoal = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3001/api/goals/${id}`);
+      const response = await axios.get(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`);
       const goal = response.data;
       setSelectedType(goal.type || 'smart');
       setFormData({
@@ -155,9 +155,9 @@ const getTodayDate = () => {
   
   try {
     if (isEditing) {
-      await axios.put(`http://localhost:3001/api/goals/${id}`, formData);
+      await axios.put(`https://cursovaya-u3w7.onrender.com/api/goals/${id}`, formData);
     } else {
-      await axios.post('http://localhost:3001/api/goals', formData);
+      await axios.post('https://cursovaya-u3w7.onrender.com/api/goals', formData);
     }
     navigate('/goals');
   } catch (error) {

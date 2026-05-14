@@ -22,7 +22,7 @@ const Dashboard = () => {
 
   const fetchGoals = async () => {
   try {
-    const response = await axios.get('http://localhost:3001/api/goals');
+    const response = await axios.get('https://cursovaya-u3w7.onrender.com/api/goals');
     const fetchedGoals = response.data;
     
     // Исключаем архивированные цели из всей статистики
