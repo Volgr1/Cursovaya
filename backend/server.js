@@ -3,7 +3,7 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Замени на свой URL от MockAPI
 const MOCKAPI_BASE_URL = 'https://6a05c29caa826ca75c0a8930.mockapi.io';
