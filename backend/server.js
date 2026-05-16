@@ -16,6 +16,13 @@ const pool = new Pool({
 app.use(cors());
 app.use(express.json());
 
+// Функция для парсинга JSON полей
+const parseGoal = (goal) => ({
+  ...goal,
+  milestones: typeof goal.milestones === 'string' ? JSON.parse(goal.milestones || '[]') : (goal.milestones || []),
+  keyResults: typeof goal.key_results === 'string' ? JSON.parse(goal.key_results || '[]') : (goal.key_results || [])
+});
+
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -29,7 +36,6 @@ const authenticateToken = (req, res, next) => {
 
 async function initDB() {
   try {
-    // Пересоздаём таблицы с правильными именами колонок
     await pool.query(`DROP TABLE IF EXISTS goals CASCADE`);
     await pool.query(`DROP TABLE IF EXISTS users CASCADE`);
     
@@ -122,12 +128,21 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
+app.delete('/api/auth/user', authenticateToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM users WHERE id = $1', [req.user.id]);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ============= GOALS API =============
 
 app.get('/api/goals', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM goals WHERE user_id = $1 ORDER BY id DESC', [req.user.id]);
-    res.json(result.rows);
+    res.json(result.rows.map(parseGoal));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -137,7 +152,7 @@ app.get('/api/goals/:id', authenticateToken, async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM goals WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' });
-    res.json(result.rows[0]);
+    res.json(parseGoal(result.rows[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -151,7 +166,7 @@ app.post('/api/goals', authenticateToken, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [req.user.id, title, description, type, category, endDate, JSON.stringify(milestones || []), JSON.stringify(keyResults || [])]
     );
-    res.status(201).json(result.rows[0]);
+    res.status(201).json(parseGoal(result.rows[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -170,7 +185,7 @@ app.put('/api/goals/:id', authenticateToken, async (req, res) => {
        updated_at = NOW()::TEXT WHERE id = $7 AND user_id = $8 RETURNING *`,
       [title, description, progress, status, milestones ? JSON.stringify(milestones) : null, keyResults ? JSON.stringify(keyResults) : null, req.params.id, req.user.id]
     );
-    res.json(result.rows[0]);
+    res.json(parseGoal(result.rows[0]));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -179,16 +194,6 @@ app.put('/api/goals/:id', authenticateToken, async (req, res) => {
 app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
   try {
     await pool.query('DELETE FROM goals WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
-    res.status(204).send();
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// Удаление пользователя (только для тестирования)
-app.delete('/api/auth/user', authenticateToken, async (req, res) => {
-  try {
-    await pool.query('DELETE FROM users WHERE id = $1', [req.user.id]);
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ error: err.message });
