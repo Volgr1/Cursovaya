@@ -13,6 +13,7 @@ import Analytics from './pages/Analytics';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import NotFound from './pages/NotFound';
+import Profile from './pages/Profile';
 import './styles/global.css';
 
 function App() {
