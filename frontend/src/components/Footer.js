@@ -1,41 +1,85 @@
-import React from 'react';
-import { FiTarget, FiGithub, FiMail, FiHeart } from 'react-icons/fi';
-import './Footer.css';
+import React, { useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FiTarget, FiHome, FiList, FiPlus, FiBarChart2, FiLogOut, FiUser, FiTrash2 } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
+import './Header.css';
 
-const Footer = () => {
+const Header = () => {
+  const location = useLocation();
+  const { user, logout, deleteAccount } = useAuth();
+  const navigate = useNavigate();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm('Вы уверены? Все ваши цели будут удалены безвозвратно!')) {
+      try {
+        await deleteAccount();
+        navigate('/register');
+      } catch (error) {
+        alert('Ошибка при удалении аккаунта');
+      }
+    }
+  };
+
+  const navItems = [
+    { path: '/', icon: <FiHome />, label: 'Dashboard' },
+    { path: '/goals', icon: <FiList />, label: 'Goals' },
+    { path: '/goals/new', icon: <FiPlus />, label: 'New Goal' },
+    { path: '/analytics', icon: <FiBarChart2 />, label: 'Analytics' },
+  ];
+
   return (
-    <footer className="footer">
-      <div className="footer-content">
-        <div className="footer-section">
-          <div className="footer-logo">
-            <FiTarget />
-            <span>GoalTracker</span>
-          </div>
-          <p>Transform your goals into achievements with SMART & OKR methodology</p>
-        </div>
+    <motion.header 
+      className="header"
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 100 }}
+    >
+      <div className="header-container">
+        <Link to="/" className="logo">
+          <FiTarget className="logo-icon" />
+          <span>GoalTracker</span>
+        </Link>
         
-        <div className="footer-section">
-          <h4>Quick Links</h4>
-          <a href="/about">About</a>
-          <a href="/help">Help Center</a>
-          <a href="/privacy">Privacy Policy</a>
-        </div>
-        
-        <div className="footer-section">
-          <h4>Connect</h4>
-          <div className="social-links">
-            <a href="#"><FiGithub /></a>
-            <a href="#"><FiMail /></a>
+        <nav className="nav">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+              {location.pathname === item.path && (
+                <motion.div className="active-indicator" layoutId="activeIndicator" />
+              )}
+            </Link>
+          ))}
+          
+          <div className="nav-link user-info" style={{ gap: '8px' }}>
+            <FiUser />
+            <span>{user?.username}</span>
           </div>
-        </div>
+          
+          <button onClick={handleDeleteAccount} className="nav-link" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--danger)' }}>
+            <FiTrash2 />
+            <span>Delete</span>
+          </button>
+          
+          <button onClick={handleLogout} className="nav-link" style={{ border: 'none', background: 'none', cursor: 'pointer' }}>
+            <FiLogOut />
+            <span>Exit</span>
+          </button>
+        </nav>
       </div>
-      
-      <div className="footer-bottom">
-        <p>Made with <FiHeart className="heart-icon" /> for tracking success</p>
-        <p>&copy; 2024 GoalTracker. All rights reserved.</p>
-      </div>
-    </footer>
+    </motion.header>
   );
 };
 
-export default Footer;
+export default Header;

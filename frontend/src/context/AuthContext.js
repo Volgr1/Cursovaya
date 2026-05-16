@@ -12,7 +12,6 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  // Настройка axios
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -21,7 +20,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
-  // Проверка токена при загрузке
   useEffect(() => {
     const checkAuth = async () => {
       if (token) {
@@ -37,7 +35,6 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [token]);
 
-  // Регистрация
   const register = async (username, email, password) => {
     const response = await axios.post(`${API_URL}/api/auth/register`, {
       username, email, password
@@ -48,7 +45,6 @@ export const AuthProvider = ({ children }) => {
     setUser(user);
   };
 
-  // Вход
   const login = async (email, password) => {
     const response = await axios.post(`${API_URL}/api/auth/login`, {
       email, password
@@ -59,8 +55,14 @@ export const AuthProvider = ({ children }) => {
     setUser(user);
   };
 
-  // Выход
   const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  const deleteAccount = async () => {
+    await axios.delete(`${API_URL}/api/auth/user`);
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
@@ -72,7 +74,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     register,
     login,
-    logout
+    logout,
+    deleteAccount
   };
 
   return (

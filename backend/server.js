@@ -185,6 +185,16 @@ app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Удаление пользователя (только для тестирования)
+app.delete('/api/auth/user', authenticateToken, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM users WHERE id = $1', [req.user.id]);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
