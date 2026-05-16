@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiTarget, FiHome, FiList, FiPlus, FiBarChart2, FiLogOut, FiUser, FiTrash2 } from 'react-icons/fi';
@@ -9,7 +9,6 @@ const Header = () => {
   const location = useLocation();
   const { user, logout, deleteAccount } = useAuth();
   const navigate = useNavigate();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -62,10 +61,10 @@ const Header = () => {
             </Link>
           ))}
           
-          <Link to="/profile" className="nav-link user-info" style={{ gap: '8px' }}>
-  <FiUser />
-  <span>{user?.username}</span>
-</Link>
+          <Link to="/profile" className="nav-link" style={{ gap: '8px' }}>
+            <FiUser />
+            <span>{user?.username}</span>
+          </Link>
           
           <button onClick={handleDeleteAccount} className="nav-link" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--danger)' }}>
             <FiTrash2 />
