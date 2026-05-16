@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiTrendingUp, FiPieChart, FiTarget, FiAward } from 'react-icons/fi';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import './Analytics.css';
 
@@ -9,9 +10,13 @@ const Analytics = () => {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+ const { user } = useAuth();
+
+useEffect(() => {
+  if (user) {
     fetchGoals();
-  }, []);
+  }
+}, [user]);
 
   const fetchGoals = async () => {
     try {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiPlus, FiEdit2, FiTrash2, FiTarget, FiClock, FiCheckCircle, FiArchive } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import './GoalsList.css';
 
@@ -11,9 +12,13 @@ const GoalsList = () => {
 
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const { user } = useAuth();
+
+useEffect(() => {
+  if (user) {
     fetchGoals();
-  }, []);
+  }
+}, [user]);
 
   const fetchGoals = async () => {
     try {

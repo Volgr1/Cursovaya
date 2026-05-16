@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { FiTarget, FiTrendingUp, FiAward, FiClock } from 'react-icons/fi';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import './Dashboard.css';
 
@@ -16,9 +17,13 @@ const Dashboard = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+ const { user } = useAuth();
+
+useEffect(() => {
+  if (user) {
     fetchGoals();
-  }, []);
+  }
+}, [user]);
 
   const fetchGoals = async () => {
   try {
