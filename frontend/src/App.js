@@ -21,12 +21,12 @@ function App() {
       <Router>
         <div className="app">
           <Routes>
-            {/* Публичные страницы */}
+            {/* Публичные страницы без Header/Footer */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/404" element={<NotFound />} />
             
-            {/* Защищённые страницы */}
+            {/* Защищённые страницы с Header и Footer */}
             <Route path="*" element={
               <ProtectedRoute>
                 <>
