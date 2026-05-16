@@ -1,12 +1,20 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiTarget, FiHome, FiList, FiPlus, FiBarChart2 } from 'react-icons/fi';
+import { FiTarget, FiHome, FiList, FiPlus, FiBarChart2, FiLogOut, FiUser } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 import './Header.css';
 
 const Header = () => {
   const location = useLocation();
-  
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   const navItems = [
     { path: '/', icon: <FiHome />, label: 'Dashboard' },
     { path: '/goals', icon: <FiList />, label: 'Goals' },
@@ -41,6 +49,16 @@ const Header = () => {
               )}
             </Link>
           ))}
+          
+          <div className="nav-link user-info">
+            <FiUser />
+            <span>{user?.username}</span>
+          </div>
+          
+          <button onClick={handleLogout} className="nav-link" style={{ border: 'none', background: 'none', cursor: 'pointer' }}>
+            <FiLogOut />
+            <span>Exit</span>
+          </button>
         </nav>
       </div>
     </motion.header>
