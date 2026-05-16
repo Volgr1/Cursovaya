@@ -20,7 +20,12 @@ app.use(express.json());
 const parseGoal = (goal) => ({
   ...goal,
   milestones: typeof goal.milestones === 'string' ? JSON.parse(goal.milestones || '[]') : (goal.milestones || []),
-  keyResults: typeof goal.key_results === 'string' ? JSON.parse(goal.key_results || '[]') : (goal.key_results || [])
+  keyResults: typeof goal.key_results === 'string' ? JSON.parse(goal.key_results || '[]') : (goal.key_results || []),
+  startDate: goal.start_date,
+  endDate: goal.end_date,
+  createdAt: goal.created_at,
+  updatedAt: goal.updated_at,
+  userId: goal.user_id
 });
 
 const authenticateToken = (req, res, next) => {
@@ -160,11 +165,11 @@ app.get('/api/goals/:id', authenticateToken, async (req, res) => {
 
 app.post('/api/goals', authenticateToken, async (req, res) => {
   try {
-    const { title, description, type, category, endDate, milestones, keyResults } = req.body;
+    const { title, description, type, category, endDate, startDate, milestones, keyResults } = req.body;
     const result = await pool.query(
-      `INSERT INTO goals (user_id, title, description, type, category, end_date, milestones, key_results)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [req.user.id, title, description, type, category, endDate, JSON.stringify(milestones || []), JSON.stringify(keyResults || [])]
+      `INSERT INTO goals (user_id, title, description, type, category, start_date, end_date, milestones, key_results)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [req.user.id, title, description, type, category, startDate || new Date().toISOString().split('T')[0], endDate, JSON.stringify(milestones || []), JSON.stringify(keyResults || [])]
     );
     res.status(201).json(parseGoal(result.rows[0]));
   } catch (err) {
@@ -177,13 +182,14 @@ app.put('/api/goals/:id', authenticateToken, async (req, res) => {
     const check = await pool.query('SELECT id FROM goals WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     if (check.rows.length === 0) return res.status(404).json({ error: 'Not found' });
 
-    const { title, description, progress, status, milestones, keyResults } = req.body;
+    const { title, description, progress, status, milestones, keyResults, startDate, endDate } = req.body;
     const result = await pool.query(
       `UPDATE goals SET title = COALESCE($1, title), description = COALESCE($2, description),
        progress = COALESCE($3, progress), status = COALESCE($4, status),
        milestones = COALESCE($5, milestones), key_results = COALESCE($6, key_results),
-       updated_at = NOW()::TEXT WHERE id = $7 AND user_id = $8 RETURNING *`,
-      [title, description, progress, status, milestones ? JSON.stringify(milestones) : null, keyResults ? JSON.stringify(keyResults) : null, req.params.id, req.user.id]
+       start_date = COALESCE($7, start_date), end_date = COALESCE($8, end_date),
+       updated_at = NOW()::TEXT WHERE id = $9 AND user_id = $10 RETURNING *`,
+      [title, description, progress, status, milestones ? JSON.stringify(milestones) : null, keyResults ? JSON.stringify(keyResults) : null, startDate, endDate, req.params.id, req.user.id]
     );
     res.json(parseGoal(result.rows[0]));
   } catch (err) {
