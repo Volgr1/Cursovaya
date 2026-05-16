@@ -62,10 +62,10 @@ const Header = () => {
             </Link>
           ))}
           
-          <div className="nav-link user-info" style={{ gap: '8px' }}>
-            <FiUser />
-            <span>{user?.username}</span>
-          </div>
+          <Link to="/profile" className="nav-link user-info" style={{ gap: '8px' }}>
+  <FiUser />
+  <span>{user?.username}</span>
+</Link>
           
           <button onClick={handleDeleteAccount} className="nav-link" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--danger)' }}>
             <FiTrash2 />

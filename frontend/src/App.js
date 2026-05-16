@@ -41,6 +41,7 @@ function App() {
                         <Route path="/goals/:id/edit" element={<GoalEditor />} />
                         <Route path="/analytics" element={<Analytics />} />
                         <Route path="*" element={<NotFound />} />
+                        <Route path="/profile" element={<Profile />} />
                       </Routes>
                     </AnimatePresence>
                   </main>

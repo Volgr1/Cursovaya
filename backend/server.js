@@ -200,6 +200,36 @@ app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// Обновление профиля
+app.put('/api/auth/update', authenticateToken, async (req, res) => {
+  try {
+    const { username, email } = req.body;
+    
+    if (!username || !email) {
+      return res.status(400).json({ error: 'Username and email required' });
+    }
+
+    // Проверка уникальности
+    const existing = await pool.query(
+      'SELECT id FROM users WHERE (LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($2)) AND id != $3',
+      [email, username, req.user.id]
+    );
+    
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Username or email already taken' });
+    }
+
+    const result = await pool.query(
+      'UPDATE users SET username = $1, email = $2 WHERE id = $3 RETURNING id, username, email, created_at',
+      [username, email, req.user.id]
+    );
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
