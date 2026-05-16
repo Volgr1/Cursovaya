@@ -35,42 +35,31 @@ async function initDB() {
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        createdAt TEXT DEFAULT NOW()::TEXT
+        created_at TEXT DEFAULT NOW()::TEXT
       )
     `);
 
-    // Проверяем есть ли колонка userId
-    const checkColumn = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name='goals' AND column_name='userId'
+    // Удаляем старую таблицу и создаём новую с правильными именами колонок
+    await pool.query(`DROP TABLE IF EXISTS goals CASCADE`);
+    await pool.query(`
+      CREATE TABLE goals (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT DEFAULT '',
+        type TEXT CHECK (type IN ('okr', 'smart')) NOT NULL,
+        category TEXT DEFAULT 'personal',
+        status TEXT DEFAULT 'active',
+        progress REAL DEFAULT 0,
+        start_date TEXT,
+        end_date TEXT,
+        created_at TEXT DEFAULT NOW()::TEXT,
+        updated_at TEXT DEFAULT NOW()::TEXT,
+        milestones JSONB DEFAULT '[]',
+        key_results JSONB DEFAULT '[]'
+      )
     `);
-
-    // Если таблицы нет или колонки userId нет — пересоздаём
-    if (checkColumn.rows.length === 0) {
-      await pool.query(`DROP TABLE IF EXISTS goals CASCADE`);
-      await pool.query(`
-        CREATE TABLE goals (
-          id SERIAL PRIMARY KEY,
-          userId INTEGER REFERENCES users(id) ON DELETE CASCADE,
-          title TEXT NOT NULL,
-          description TEXT DEFAULT '',
-          type TEXT CHECK (type IN ('okr', 'smart')) NOT NULL,
-          category TEXT DEFAULT 'personal',
-          status TEXT DEFAULT 'active',
-          progress REAL DEFAULT 0,
-          startDate TEXT,
-          endDate TEXT,
-          createdAt TEXT DEFAULT NOW()::TEXT,
-          updatedAt TEXT DEFAULT NOW()::TEXT,
-          milestones JSONB DEFAULT '[]',
-          keyResults JSONB DEFAULT '[]'
-        )
-      `);
-      console.log('Goals table recreated with userId column');
-    }
-
-    console.log('Database initialized');
+    console.log('Database initialized with correct column names');
   } catch (err) {
     console.error('Database init error:', err);
   }
@@ -91,7 +80,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, createdAt',
+      'INSERT INTO users (username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, created_at',
       [username, email, hashedPassword]
     );
 
@@ -115,7 +104,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ user: { id: user.id, username: user.username, email: user.email, createdAt: user.createdAt }, token });
+    res.json({ user: { id: user.id, username: user.username, email: user.email, created_at: user.created_at }, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -123,7 +112,7 @@ app.post('/api/auth/login', async (req, res) => {
 
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, username, email, createdAt FROM users WHERE id = $1', [req.user.id]);
+    const result = await pool.query('SELECT id, username, email, created_at FROM users WHERE id = $1', [req.user.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
     res.json(result.rows[0]);
   } catch (err) {
@@ -135,7 +124,7 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
 
 app.get('/api/goals', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM goals WHERE userId = $1 ORDER BY id DESC', [req.user.id]);
+    const result = await pool.query('SELECT * FROM goals WHERE user_id = $1 ORDER BY id DESC', [req.user.id]);
     res.json(result.rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -144,7 +133,7 @@ app.get('/api/goals', authenticateToken, async (req, res) => {
 
 app.get('/api/goals/:id', authenticateToken, async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM goals WHERE id = $1 AND userId = $2', [req.params.id, req.user.id]);
+    const result = await pool.query('SELECT * FROM goals WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Not found' });
     res.json(result.rows[0]);
   } catch (err) {
@@ -156,7 +145,7 @@ app.post('/api/goals', authenticateToken, async (req, res) => {
   try {
     const { title, description, type, category, endDate, milestones, keyResults } = req.body;
     const result = await pool.query(
-      `INSERT INTO goals (userId, title, description, type, category, endDate, milestones, keyResults)
+      `INSERT INTO goals (user_id, title, description, type, category, end_date, milestones, key_results)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [req.user.id, title, description, type, category, endDate, JSON.stringify(milestones || []), JSON.stringify(keyResults || [])]
     );
@@ -168,15 +157,15 @@ app.post('/api/goals', authenticateToken, async (req, res) => {
 
 app.put('/api/goals/:id', authenticateToken, async (req, res) => {
   try {
-    const check = await pool.query('SELECT id FROM goals WHERE id = $1 AND userId = $2', [req.params.id, req.user.id]);
+    const check = await pool.query('SELECT id FROM goals WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     if (check.rows.length === 0) return res.status(404).json({ error: 'Not found' });
 
     const { title, description, progress, status, milestones, keyResults } = req.body;
     const result = await pool.query(
       `UPDATE goals SET title = COALESCE($1, title), description = COALESCE($2, description),
        progress = COALESCE($3, progress), status = COALESCE($4, status),
-       milestones = COALESCE($5, milestones), keyResults = COALESCE($6, keyResults),
-       updatedAt = NOW()::TEXT WHERE id = $7 AND userId = $8 RETURNING *`,
+       milestones = COALESCE($5, milestones), key_results = COALESCE($6, key_results),
+       updated_at = NOW()::TEXT WHERE id = $7 AND user_id = $8 RETURNING *`,
       [title, description, progress, status, milestones ? JSON.stringify(milestones) : null, keyResults ? JSON.stringify(keyResults) : null, req.params.id, req.user.id]
     );
     res.json(result.rows[0]);
@@ -187,7 +176,7 @@ app.put('/api/goals/:id', authenticateToken, async (req, res) => {
 
 app.delete('/api/goals/:id', authenticateToken, async (req, res) => {
   try {
-    await pool.query('DELETE FROM goals WHERE id = $1 AND userId = $2', [req.params.id, req.user.id]);
+    await pool.query('DELETE FROM goals WHERE id = $1 AND user_id = $2', [req.params.id, req.user.id]);
     res.status(204).send();
   } catch (err) {
     res.status(500).json({ error: err.message });
