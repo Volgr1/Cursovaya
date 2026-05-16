@@ -1,18 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FiTarget, FiHome, FiList, FiPlus, FiBarChart2, FiLogOut, FiUser } from 'react-icons/fi';
+import { FiTarget, FiHome, FiList, FiPlus, FiBarChart2, FiLogOut, FiUser, FiTrash2 } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import './Header.css';
 
 const Header = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const navigate = useNavigate();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (window.confirm('Вы уверены? Все ваши цели будут удалены безвозвратно!')) {
+      try {
+        await deleteAccount();
+        navigate('/register');
+      } catch (error) {
+        alert('Ошибка при удалении аккаунта');
+      }
+    }
   };
 
   const navItems = [
@@ -50,10 +62,15 @@ const Header = () => {
             </Link>
           ))}
           
-          <div className="nav-link user-info">
+          <div className="nav-link user-info" style={{ gap: '8px' }}>
             <FiUser />
             <span>{user?.username}</span>
           </div>
+          
+          <button onClick={handleDeleteAccount} className="nav-link" style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--danger)' }}>
+            <FiTrash2 />
+            <span>Delete</span>
+          </button>
           
           <button onClick={handleLogout} className="nav-link" style={{ border: 'none', background: 'none', cursor: 'pointer' }}>
             <FiLogOut />
