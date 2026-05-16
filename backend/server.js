@@ -29,8 +29,12 @@ const authenticateToken = (req, res, next) => {
 
 async function initDB() {
   try {
+    // Пересоздаём таблицы с правильными именами колонок
+    await pool.query(`DROP TABLE IF EXISTS goals CASCADE`);
+    await pool.query(`DROP TABLE IF EXISTS users CASCADE`);
+    
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
+      CREATE TABLE users (
         id SERIAL PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
@@ -38,9 +42,7 @@ async function initDB() {
         created_at TEXT DEFAULT NOW()::TEXT
       )
     `);
-
-    // Удаляем старую таблицу и создаём новую с правильными именами колонок
-    await pool.query(`DROP TABLE IF EXISTS goals CASCADE`);
+    
     await pool.query(`
       CREATE TABLE goals (
         id SERIAL PRIMARY KEY,
@@ -59,7 +61,7 @@ async function initDB() {
         key_results JSONB DEFAULT '[]'
       )
     `);
-    console.log('Database initialized with correct column names');
+    console.log('Database initialized');
   } catch (err) {
     console.error('Database init error:', err);
   }
